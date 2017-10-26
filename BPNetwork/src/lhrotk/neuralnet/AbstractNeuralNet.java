@@ -1,8 +1,10 @@
 package lhrotk.neuralnet;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 
 import lhrotk.neuralnet.exception.*;
@@ -13,13 +15,13 @@ import lhrotk.neuralnet.exception.*;
  *
  */
 abstract class AbstractNeuralNet implements NeuralNetInterface {
-	final double SIGMOID_LOWER_BOUND;
-	final double SIGMOID_UPPER_BOUND;
-	final double LEARNING_RATE;
-	final double MOMENTUM_TERM;
-	final int DIM_OF_INPUT;
-	final int DIM_OF_HIDDEN;
-	final int DIM_OF_OUTPUT;
+	private double SIGMOID_LOWER_BOUND;
+	private double SIGMOID_UPPER_BOUND;
+	private double LEARNING_RATE;
+	private double MOMENTUM_TERM;
+	private int DIM_OF_INPUT;
+	private int DIM_OF_HIDDEN;
+	private int DIM_OF_OUTPUT;
 
 	final int INPUT_TO_HIDDEN = 0;
 	final int HIDDEN_TO_OUTPUT = 1;
@@ -137,15 +139,62 @@ abstract class AbstractNeuralNet implements NeuralNetInterface {
 	}
 
 	@Override
-	public void save(File argFile) {
-		// TODO Auto-generated method stub
+	public void save(File argFile) throws IOException {
+		FileWriter fileWriter = new FileWriter(argFile, false);
+		fileWriter.write(this.SIGMOID_LOWER_BOUND+"\r\n");
+		fileWriter.write(this.SIGMOID_UPPER_BOUND+"\r\n");
+		fileWriter.write(this.LEARNING_RATE+"\r\n");
+		fileWriter.write(this.MOMENTUM_TERM+"\r\n");
+		fileWriter.write(this.DIM_OF_INPUT+"\r\n");
+		fileWriter.write(this.DIM_OF_HIDDEN+"\r\n");
+		fileWriter.write(this.DIM_OF_OUTPUT+"\r\n");
+		fileWriter.write(this.acceptableError+"\r\n");
+		for (int i = 0; i < weightLayer1.length; i++) {
+			for (int j = 0; j < weightLayer1[0].length; j++) {
+				fileWriter.write(weightLayer1[i][j]+"\r\n");
+			}
+		}
+		for (int i = 0; i < weightLayer2.length; i++) {
+			for (int j = 0; j < weightLayer2[0].length; j++) {
+				fileWriter.write(weightLayer2[i][j]+"\r\n");
+			}
+		}
+		fileWriter.close();
 
 	}
 
 	@Override
-	public void load(String argFileName) throws IOException {
-		// TODO Auto-generated method stub
-
+	public void load(String argFileName) throws IOException, InputFormatException {
+		BufferedReader bfReader = new BufferedReader(new FileReader(argFileName));
+		this.SIGMOID_LOWER_BOUND = Double.parseDouble(bfReader.readLine());
+		this.SIGMOID_UPPER_BOUND = Double.parseDouble(bfReader.readLine());
+		this.LEARNING_RATE = Double.parseDouble(bfReader.readLine());
+		this.MOMENTUM_TERM = Double.parseDouble(bfReader.readLine());
+		this.DIM_OF_INPUT = Integer.parseInt(bfReader.readLine());
+		this.DIM_OF_HIDDEN = Integer.parseInt(bfReader.readLine());
+		this.DIM_OF_OUTPUT = Integer.parseInt(bfReader.readLine());
+		this.acceptableError = Double.parseDouble(bfReader.readLine());
+		if (this.DIM_OF_HIDDEN < 1 || this.DIM_OF_INPUT < 1 || this.DIM_OF_OUTPUT < 1) {
+			throw new InputFormatException("Layer Dimension Initialization Exception");
+		}
+		// consider bias terms
+		this.weightLayer1 = new double[this.DIM_OF_INPUT + 1][this.DIM_OF_HIDDEN];
+		this.weightLayer2 = new double[this.DIM_OF_HIDDEN + 1][this.DIM_OF_OUTPUT];
+		this.weightChange1 = new double[this.DIM_OF_INPUT + 1][this.DIM_OF_HIDDEN];
+		this.weightChange2 = new double[this.DIM_OF_HIDDEN + 1][this.DIM_OF_OUTPUT];
+		this.hiddenNeurons = new double[this.DIM_OF_HIDDEN + 1];
+		this.hiddenNeurons[this.hiddenNeurons.length - 1] = NeuralNetInterface.BIAS;
+		this.outputVector = new double[this.DIM_OF_OUTPUT];
+		for (int i = 0; i < weightLayer1.length; i++) {
+			for (int j = 0; j < weightLayer1[0].length; j++) {
+				weightLayer1[i][j] = Double.parseDouble(bfReader.readLine());
+			}
+		}
+		for (int i = 0; i < weightLayer2.length; i++) {
+			for (int j = 0; j < weightLayer2[0].length; j++) {
+				weightLayer2[i][j] = Double.parseDouble(bfReader.readLine());
+			}
+		}
 	}
 
 	@Override
